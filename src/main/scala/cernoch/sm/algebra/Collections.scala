@@ -38,6 +38,19 @@ object Collections {
       yield merge(xh,xt)
   }
 
+  /** Carthesian product of lists */
+  def carthesian
+    [T]
+    (data: List[List[T]])
+  : List[List[T]]
+  = data match {
+    case Nil => List(Nil)
+    case head :: tail =>
+      for(xh <- head;
+          xt <- carthesian(tail))
+      yield xh :: xt
+  }
+
   /** Differentiate each element the previous one */
   def differentiate
     [T]

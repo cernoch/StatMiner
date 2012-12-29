@@ -34,6 +34,11 @@ class CollectionsTest extends Specification {
       )){_  + " " + _}.toSet must_==
         Set("Hello world!", "Hello John,")
     }
+
+    "work well on lists" in {
+      carthesian(List( List(1),List(2,3) )) must_==
+        List(1 :: 2 :: Nil, 1 :: 3 :: Nil)
+    }
   }
 
 
