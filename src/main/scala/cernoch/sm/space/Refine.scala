@@ -31,35 +31,40 @@ trait Instant
   def oldVar: Var
   def neuVal: Val[_]
   
-} 
-
-
-
-class Generator(mode: Set[Btom[Term]]) {
-
-  /* Adds a new atom to a clause */
-  def addAtomToHorn
-    (cl: Horn[Atom[Term],Set[Atom[Term]]])
-
-  = mode.flatMap(m => {
-    val idx = cl.bodyAtoms.toList.flatMap{_.variables}.groupBy{_.dom}
-    val mIn = m.modeIn.toList
-    carthesian(mIn.map{v => idx(v.dom)})
-      .map{bind => m mapSomeArg (mIn zip bind).toMap.get}
-    
-  }).map{ a => new AddAtom[Horn[Atom[Term], Set[Atom[Term]]]]() {
-      def added = a
-      def old = cl
-      def neu = new Horn(cl.head, cl.bodyAtoms + a)
-    }
-  }
 }
+
+
 
 object Generator {
 
+  /* Adds a new atom to a clause */
+  def addAtomToHorn
+    [H <: Atom[Term]]
+    (mode: Set[Btom[FFT]])
+    (orig: Horn[H,Set[Atom[Term]]])
+  = {
+    val idx = orig
+      .bodyAtoms.toList
+      .flatMap{_.variables}
+      .groupBy{_.dom}
+
+    mode.flatMap(m => {
+      val mIn = m.modeIn.toList
+
+      carthesian(mIn.map{v => idx(v.dom)})
+        .map{bind => m mapSomeArg (mIn zip bind).toMap.get}
+    
+    }).map{ a => new AddAtom[Horn[H,Set[Atom[Term]]]]() {
+        def added = a
+        def old = orig
+        def neu = new Horn(orig.head, orig.bodyAtoms + a)
+      }
+    }
+  }
+
   /* All variables for instantiation */
   def instantiable
-    [S <: Iterable[Atom[Term]]]
+    [S <: Iterable[Atom[FFT]]]
     (atoms: S)
   = {
     for(atom <- atoms; bArg <- atom.args
@@ -71,7 +76,8 @@ object Generator {
 
   /* Instantiates variables in a Horn clause */
   def instantiateHornBody
-    (clause: Horn[Atom[Term],Set[Atom[Term]]],
+    [H<:Atom[Term]]
+    (clause: Horn[H,Set[Atom[Term]]],
      candidates: Set[Var])
 
   = candidates
@@ -80,7 +86,7 @@ object Generator {
     val catDom = war.dom.asInstanceOf[CatDom]
     catDom.allowed.map{ wal => {
 
-      new Instant[Horn[Atom[Term],Set[Atom[Term]]]]() {
+      new Instant[Horn[H,Set[Atom[Term]]]]() {
 
         private val _neuVal = Val(wal,catDom)
         private val _neu = new Horn(
