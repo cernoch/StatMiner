@@ -37,7 +37,7 @@ private object QueriableAdaptor {
  */
 class QueryCrossvalAdaptor
   ( storage: Queriable[Horn[Atom[FFT], Set[Atom[FFT]]], Val[_]],
-    crossvalidator: (Iterable[_] => Iterable[(_) => Boolean])
+    crossvalidator: (Iterable[Any] => Iterable[Any => Boolean])
   )
   extends (Horn[HeadAtom, Set[Atom[FFT]]]
     => Iterable[(Iterable[Iterable[BigDecimal]],

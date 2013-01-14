@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>cernoch.sm.core</groupId>
   <artifactId>StatMiner</artifactId>
-  <version>0.5</version>
+  <version>0.6</version>
   <name>${project.artifactId}</name>
   <description>StatMiner algorithm</description>
   <inceptionYear>2012</inceptionYear>
@@ -47,7 +47,7 @@
     <dependency>
       <groupId>cernoch.scalogic</groupId>
       <artifactId>ScaLogic</artifactId>
-      <version>0.5</version>
+      <version>0.6</version>
     </dependency>
     <dependency>
       <groupId>cernoch.scalistics</groupId>
