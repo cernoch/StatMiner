@@ -41,25 +41,28 @@ object Generator {
   def addAtomToHorn
     [H <: Atom[Term]]
     (mode: Set[Btom[FFT]])
-    (orig: Horn[H,Set[Atom[Term]]])
+    (orig: Horn[H,Set[Atom[FFT]]])
   = {
     val idx = orig
       .bodyAtoms.toList
       .flatMap{_.variables}
       .groupBy{_.dom}
-
+    
     mode.flatMap(m => {
       val mIn = m.modeIn.toList
-
-      carthesian(mIn.map{v => idx(v.dom)})
-        .map{bind => m mapSomeArg (mIn zip bind).toMap.get}
-    
-    }).map{ a => new AddAtom[Horn[H,Set[Atom[Term]]]]() {
-        def added = a
-        def old = orig
-        def neu = new Horn(orig.head, orig.bodyAtoms + a)
+      val mDm = mIn.map{v =>
+        idx.get(v.dom).getOrElse(List())
       }
-    }
+
+      carthesian(mDm).map{bind =>
+        m mapSomeArg (mIn zip bind).toMap.get
+      }
+
+    }).map{ a => new AddAtom[Horn[H,Set[Atom[FFT]]]]() {
+      def added = a
+      def old = orig
+      def neu = new Horn(orig.head, orig.bodyAtoms + a)
+    }}
   }
 
   /* All variables for instantiation */
@@ -76,8 +79,8 @@ object Generator {
 
   /* Instantiates variables in a Horn clause */
   def instantiateHornBody
-    [H<:Atom[Term]]
-    (clause: Horn[H,Set[Atom[Term]]],
+    [H<:Atom[FFT]]
+    (clause: Horn[H,Set[Atom[FFT]]],
      candidates: Set[Var])
 
   = candidates
@@ -86,7 +89,7 @@ object Generator {
     val catDom = war.dom.asInstanceOf[CatDom]
     catDom.allowed.map{ wal => {
 
-      new Instant[Horn[H,Set[Atom[Term]]]]() {
+      new Instant[Horn[H,Set[Atom[FFT]]]]() {
 
         private val _neuVal = Val(wal,catDom)
         private val _neu = new Horn(

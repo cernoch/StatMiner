@@ -2,6 +2,7 @@ package cernoch.sm.algebra
 
 import cernoch.scalistics._
 import collection.mutable.ArrayBuffer
+import Collections._
 
 
 /**
@@ -83,11 +84,18 @@ object Histograms {
     }) sorted }
 
   private def noise
-    (i:Iterable[BigDecimal])
+    (i: Iterable[BigDecimal])
   = (i zip Stream.from(1)).map(a => a._1 / a._2)
 
+  private def maxOrZero
+    (i: Iterable[BigDecimal])
+  = if (i.isEmpty)
+    BigDecimal(0)
+  else
+    i.max
+  
   def ncALP(hist: Hist[BigDecimal])
-  = noise(Collections.differentiate(
-    BigDecimal(0) :: alp(hist)((x,y,h) => BigDecimal(h)*(x-y))
-  )).max
+  = maxOrZero(noise(differentiate(
+    BigDecimal(0) :: alp(hist){(x,y,h) => BigDecimal(h)*(x-y)}
+  )))
 }

@@ -23,7 +23,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
    * you might use [[cernoch.sm.space.QueriableAdaptor]] in here.
    */
   def execQuery
-    (state: Horn[HeadAtom, Set[Atom[Term]]])
+    (state: Horn[HeadAtom, Set[Atom[FFT]]])
   : Iterable[Iterable[BigDecimal]]
 
   /**
@@ -45,7 +45,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
 
 
   def stateResult
-    (state: Horn[HeadAtom, Set[Atom[Term]]])
+    (state: Horn[HeadAtom, Set[Atom[FFT]]])
   = {
     val data = execQuery(state)
 
@@ -78,7 +78,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
   }
 
   def sortByResults
-    (old:    Array[(Horn[HeadAtom, Set[Atom[Term]]], (Int,String,BigDec))],
-     neu: Iterable[(Horn[HeadAtom, Set[Atom[Term]]], (Int,String,BigDec))])
+    (old:    Array[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,BigDec))],
+     neu: Iterable[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,BigDec))])
   = (old ++ neu) sortBy {- _._2._3}
 }

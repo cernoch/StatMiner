@@ -39,7 +39,7 @@ class RefineTest extends Specification {
       val retVal =
         Generator.instantiateHornBody(
           new Horn(Atom("h",x),
-                   Set(Atom[Term]("p", x,y,z))),
+                   Set(Atom[FFT]("p", x,y,z))),
           Set(y,z)
         )
 
@@ -55,7 +55,7 @@ class RefineTest extends Specification {
       val btom = new Btom("p", List(x,y,z),
         hooks = Set(), modeIn = Set())
 
-      val horn = new Horn(Atom("h"), Set[Atom[Term]]())
+      val horn = new Horn(Atom("h"), Set[Atom[FFT]]())
       val retVal = Generator.addAtomToHorn(Set(btom))(horn)
 
       (retVal.size must_== 1) and
@@ -73,8 +73,8 @@ class RefineTest extends Specification {
         hooks = Set(),
         modeIn = Set(y))
 
-      val atom1 = new Atom("q", List[Term](x,v))
-      val atom2 = new Atom("r", List[Term](x,w))
+      val atom1 = new Atom("q", List[FFT](x,v))
+      val atom2 = new Atom("r", List[FFT](x,w))
 
       val horn = new Horn(Atom("h"), Set(atom1,atom2))
       val retVal = Generator.addAtomToHorn(Set(btom))(horn)
