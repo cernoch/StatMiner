@@ -10,7 +10,7 @@ import collection.mutable.ArrayBuffer
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
 class QueriableAdaptor(storage: Queriable[Horn[Atom[FFT], Set[Atom[FFT]]], Val[_]])
-    extends (Horn[HeadAtom, Set[Atom[FFT]]] => Iterable[Iterable[BigDecimal]]) {
+    extends (Horn[HeadAtom, Set[Atom[FFT]]] => Iterable[Iterable[Double]]) {
 
   def apply(q: Horn[HeadAtom, Set[Atom[FFT]]])
   = QueriableAdaptor.helper(
@@ -23,7 +23,7 @@ class QueriableAdaptor(storage: Queriable[Horn[Atom[FFT], Set[Atom[FFT]]], Val[_
 private object QueriableAdaptor {
 
   private[space] def helper(i: Iterable[Iterable[Map[Var,Val[_]]]], v: Var)
-  = i.map{ _.map{ _( v ).get.asInstanceOf[BigDecimal] } }
+  = i.map{ _.map{ _( v ).get.asInstanceOf[BigDecimal].toDouble } }
 }
 
 
@@ -40,8 +40,8 @@ class QueryCrossvalAdaptor
     crossvalidator: (Iterable[Any] => Iterable[Any => Boolean])
   )
   extends (Horn[HeadAtom, Set[Atom[FFT]]]
-    => Iterable[(Iterable[Iterable[BigDecimal]],
-                 Iterable[Iterable[BigDecimal]] )] ) {
+    => Iterable[(Iterable[Iterable[Double]],
+                 Iterable[Iterable[Double]] )] ) {
 
   def apply(q: Horn[HeadAtom, Set[Atom[FFT]]])
   = {

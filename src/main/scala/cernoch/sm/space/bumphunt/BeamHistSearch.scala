@@ -4,9 +4,7 @@ import cernoch.scalogic._
 import cernoch.scalistics.Hist
 
 import cernoch.sm.algebra._
-import cernoch.sm.space.{HeadAtom, ClauseBeam}
-
-import scala.math.{BigDecimal => BigDec}
+import cernoch.sm.space._
 
 /**
  * Bump-hunting algorithm via ncALP metric
@@ -14,7 +12,7 @@ import scala.math.{BigDecimal => BigDec}
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
 abstract class BeamHistSearch(modes:Set[Btom[FFT]])
-  extends ClauseBeam[(Int,String,BigDec)](modes) {
+  extends ClauseBeam[(Int,String,Hist[Double],Double)](modes) {
 
   /**
    * Execute the query.
@@ -24,61 +22,111 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
    */
   def execQuery
     (state: Horn[HeadAtom, Set[Atom[FFT]]])
-  : Iterable[Iterable[BigDecimal]]
+  : Iterable[Iterable[Double]]
 
   /**
-   * All used aggregators
+   * All available aggregators
    */
   protected def aggregators = {
-    val x = new Aggregate[BigDecimal]()
-    import x._
-    List(min, max, sum, mode, mean, median, variance)
+    val doubleAggregators
+      = new Aggregate[Double]()
+    import doubleAggregators._
+
+    List(min, max, sum, mode,
+      mean, median, new StdDev())
   }
 
   /**
    * Guess the right number of bins
    */
   protected def numberOfBins
-    (histData: Iterable[BigDecimal])
+  (histData: Iterable[Double])
   : Iterable[Int]
-  = 3 to 20
+  = 3 to math.min(20, histData.toSet.size)
 
+
+
+  def allEvaluations(data: Iterable[Iterable[Double]])
+  = {
+    for (aggFunc <- aggregators; // Try all aggregators
+         aggregated = data.map{aggFunc(_) get}; // Apply the agg.
+         binCnt <- numberOfBins(aggregated)) // Try various number of bins
+    yield {
+
+      /*
+       * Compute the bin centres
+       */
+      val min = aggregated.min
+      val max = aggregated.max
+      val range = max - min
+
+      val cuts =
+        for (x <- 1 to (binCnt-1))
+          yield min + (range * x / binCnt)
+
+      val hist = Hist(aggregated, cuts)
+      val rawALP = Histograms ncALP hist
+      val normALP = rawALP / range / hist.max.toInt
+
+      /*
+       * Output every possible solution
+       */
+      ( binCnt, aggFunc name, hist, normALP )
+    }
+
+  }
+
+  /**
+   * Returns a percentage from a nominator and denominator
+   */
+  private def percentage
+    (nom: Int, denom: Int)
+  = denom match {
+    case 0 => "?%"
+    case _ => (nom * 100 / denom) + "%"
+  }
+
+  /**
+   * Given the number of examples
+   * with and without a value,
+   * do we have enough data?
+   */
+  def hasEnough
+    (okay:Int, total:Int)
+  = (total * 9 / 10) < okay
+
+  private def byBestResult
+  = (Ordering by {x: (Int,String,Hist[Double],Double) => x._4})
 
   def stateResult
     (state: Horn[HeadAtom, Set[Atom[FFT]]])
   = {
+    // All examples and values
     val data = execQuery(state)
+    // Only those that return some value
+    val okay = data.filter{! _.isEmpty}
 
-    val possibilities
-    = for (aggFunc <- aggregators; // Try all aggregators
-           aggregated = data.map{aggFunc(_) get}; // Apply the agg.
-           binCnt <- numberOfBins(aggregated)) // Try various number of bins
-      yield {
+    // If |okay| is too small, return
+    if (!hasEnough(okay.size, data.size))
+      throw new TooOld("Only " +
+        percentage(okay.size, data.size) +
+        " examples return a value."
+      )
 
-        /*
-         * Compute the bin centres
-         */
-        val min = aggregated.min
-        val range = aggregated.max - min
+    // Compute all possible hist/func/...
+    val allRes = allEvaluations(okay)
 
-        val cuts = for (x <- 1 to (binCnt-1)) yield
-          min + ((range * BigDecimal(x)) / binCnt)
-
-        /*
-         * Output every possible solution
-         */
-        ( binCnt,
-          aggFunc name,
-          Histograms ncALP Hist(aggregated, cuts)
-        )
-      }
+    if (allRes.isEmpty)
+      throw new TooOld(
+        "No histogram can be" +
+        " generated from the clause.")
 
     // Pick the best solution
-    Some(possibilities max (Ordering by {x: (Int,String,BigDec) => x._3}))
+    allRes max byBestResult
   }
 
   def sortByResults
-    (old:    Array[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,BigDec))],
-     neu: Iterable[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,BigDec))])
-  = (old ++ neu) sortBy {- _._2._3}
+    (old:    Array[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,Hist[Double],Double))],
+     neu: Iterable[(Horn[HeadAtom, Set[Atom[FFT]]], (Int,String,Hist[Double],Double))])
+  = (old ++ neu) sortBy {- _._2._4}
 }

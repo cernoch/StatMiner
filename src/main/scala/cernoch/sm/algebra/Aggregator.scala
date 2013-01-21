@@ -153,7 +153,7 @@ final case class MedianOrdered[T]
 
 final case class Variance[T]
     (implicit num: Fractional[T])
-  extends Aggregator[T] {
+  extends Aggregator[T] { self =>
 
   override def name = "variance"
 
@@ -169,8 +169,22 @@ final case class Variance[T]
       .foldLeft(zero){plus}
   })
   
-  def sqr(a:T) = num.times(a,a)
+  protected def sqr(a:T) = num.times(a,a)
 }
+
+
+
+final case class StdDev()
+  extends Aggregator[Double] {
+
+  override def name = "stdDev"
+
+  private val varia = new Variance[Double]()
+
+  def apply(it: Iterable[Double])
+  = varia(it) map math.sqrt
+}
+
 
 
 final case class MostOftenValue[T]()

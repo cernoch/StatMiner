@@ -70,32 +70,47 @@ object Histograms {
 
   private def alp[T]
     (hist: Hist[T])
-    (implicit area: (T,T,BigInt) => BigDecimal)
+    (area: (T,T,BigInt) => T)
+    (implicit num: Fractional[T])
   = {(
     for ((beg,lake) <- lakes(hist))
     yield {
       var last = beg
-      var suma = BigDecimal(0)
+      var suma = num.zero
       for ((value, depth) <- lake) {
-        suma = suma + area(value, last, depth)
+        suma = num.plus(suma, area(value, last, depth))
         last = value
       }
       suma
     }) sorted }
 
-  private def noise
-    (i: Iterable[BigDecimal])
-  = (i zip Stream.from(1)).map(a => a._1 / a._2)
+  private def noise[T]
+    (i: Iterable[T])
+    (implicit num: Fractional[T])
+  = {
+    var y = num.zero
+    for (x <- i) yield {
+      y = num.plus(y,num.one)
+      num.div(x,y)
+    }
+  }
 
-  private def maxOrZero
-    (i: Iterable[BigDecimal])
+  private def maxOrZero[T]
+    (i: Iterable[T])
+    (implicit num: Numeric[T])
   = if (i.isEmpty)
-    BigDecimal(0)
+    num.zero
   else
     i.max
   
-  def ncALP(hist: Hist[BigDecimal])
+  def ncALP[T](hist: Hist[T])
+    (implicit num: Fractional[T])
   = maxOrZero(noise(differentiate(
-    BigDecimal(0) :: alp(hist){(x,y,h) => BigDecimal(h)*(x-y)}
+    num.zero :: alp(hist){
+      (x,y,h) =>
+        num.times(
+          num.fromInt(h.toInt),
+          num.minus(x,y)
+        ) }
   )))
 }
