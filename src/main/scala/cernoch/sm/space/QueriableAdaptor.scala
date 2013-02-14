@@ -1,15 +1,16 @@
 package cernoch.sm.space
 
 import cernoch.scalogic._
-import storage.Queriable
 import collection.mutable.ArrayBuffer
 
 /**
- * Adapts a queriable storage for [[cernoch.sm.space.bumphunt.BeamHistSearch]]
+ * Adapts collection queriable storage for [[cernoch.sm.space.bumphunt.BeamHistSearch]]
  *
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
-class QueriableAdaptor(storage: Queriable[Horn[Atom[FFT], Set[Atom[FFT]]], Val[_]])
+class QueriableAdaptor
+    [Q <: {def query(c: Horn[Atom[FFT], Set[Atom[FFT]]]) : Iterable[Map[Var,Val[_]]] } ]
+    (storage: Q)
     extends (Horn[HeadAtom, Set[Atom[FFT]]] => Iterable[Iterable[Double]]) {
 
   def apply(q: Horn[HeadAtom, Set[Atom[FFT]]])
@@ -29,19 +30,16 @@ private object QueriableAdaptor {
 
 
 /**
- * Adapts a queriable storage for [[cernoch.sm.space.bumphunt.BeamHistSearch]]
+ * Adapts collection queriable storage for [[cernoch.sm.space.bumphunt.BeamHistSearch]]
  * and splits data between train and test sets.
  *
  *
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
 class QueryCrossvalAdaptor
-  ( storage: Queriable[Horn[Atom[FFT], Set[Atom[FFT]]], Val[_]],
-    crossvalidator: (Iterable[Any] => Iterable[Any => Boolean])
-  )
-  extends (Horn[HeadAtom, Set[Atom[FFT]]]
-    => Iterable[(Iterable[Iterable[Double]],
-                 Iterable[Iterable[Double]] )] ) {
+  [Q <: {def query(c: Horn[Atom[FFT], Set[Atom[FFT]]]) : Iterable[Map[Var,Val[_]]] } ]
+  ( storage: Q, crossvalidator: (Iterable[Any] => Iterable[Any => Boolean]) )
+  extends (Horn[HeadAtom, Set[Atom[FFT]]] => Iterable[(Iterable[Iterable[Double]], Iterable[Iterable[Double]] )] ) {
 
   def apply(q: Horn[HeadAtom, Set[Atom[FFT]]])
   = {

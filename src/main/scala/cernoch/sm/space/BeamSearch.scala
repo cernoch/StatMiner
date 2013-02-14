@@ -15,32 +15,58 @@ abstract class BeamSearch[State,Result]
   var maxConsNonImp = 10
 
   private var lastTime = 0
-  private var lastBest : State = _
+  private var lastBest : Option[State] = None
 
-  def shallWeHalt
-    (states: Array[(State, Result)])
-  = if (!states.isEmpty) {
 
-    if (lastBest == states.head._1)
-      lastTime = 0
 
-    lastBest = states.head._1
-    false
-
-  } else {
-      lastTime > maxConsNonImp
+  override def call() = {
+    lastTime = 0
+    lastBest = None
+    super.call()
   }
 
-  private def cropBW[T](a:Array[T])
-  = a.slice(0, min(beamWidth, a.length))
+
+
+  def shallWeHalt
+    (states: Iterable[(State, Result)])
+  = {
+    val best = states.isEmpty match {
+      case true => None
+      case false => Some(states.head._1)
+    }
+
+    if (best == lastBest) {
+      lastTime = lastTime + 1
+      probe.consideringStop(lastTime)
+      lastTime >= maxConsNonImp
+
+    } else {
+      if (!states.isEmpty) {
+        probe.resettingBeamCounter(states.head._1)
+        lastBest = Some(states.head._1)
+        lastTime = 0
+      }
+      false
+    }
+  }
+
+
+
+  private def cropByBeamWidth
+  (collection: Iterable[(State,Result)])
+  = collection.zip(Stream from 1)
+    .filter{ case ((s,r),i) => i <= beamWidth match {
+      case false => false
+      case true => { probe.stateDropped(s,r); true }
+    }}.map{ case (k,v) => k }
 
   override def cropAndSort
-    ( old: Array[(State,Result)],
+    ( old: Iterable[(State,Result)],
       neu: Iterable[(State,Result)])
-  = cropBW(sortByResults(old,neu))
+  = cropByBeamWidth(onlySort(old,neu))
   
-  def sortByResults
-    ( old: Array[(State,Result)],
+  def onlySort
+    ( old: Iterable[(State,Result)],
       neu: Iterable[(State,Result)])
-  : Array[(State,Result)]
+  : Iterable[(State,Result)]
 }

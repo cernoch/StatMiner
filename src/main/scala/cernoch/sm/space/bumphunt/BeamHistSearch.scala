@@ -17,7 +17,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
   /**
    * Execute the query.
    *
-   * If using a [[cernoch.scalogic.storage.Queriable]] storage engine,
+   * If using collection [[cernoch.scalogic.storage.Queriable]] storage engine,
    * you might use [[cernoch.sm.space.QueriableAdaptor]] in here.
    */
   def execQuery
@@ -77,7 +77,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
   }
 
   /**
-   * Returns a percentage from a nominator and denominator
+   * Returns collection percentage from collection nominator and denominator
    */
   private def percentage
     (nom: Int, denom: Int)
@@ -88,7 +88,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
 
   /**
    * Given the number of examples
-   * with and without a value,
+   * with and without collection value,
    * do we have enough data?
    */
   def hasEnough
@@ -110,7 +110,7 @@ abstract class BeamHistSearch(modes:Set[Btom[FFT]])
     if (!hasEnough(okay.size, data.size))
       throw new TooOld("Only " +
         percentage(okay.size, data.size) +
-        " examples return a value."
+        " examples return collection value."
       )
 
     // Compute all possible hist/func/...

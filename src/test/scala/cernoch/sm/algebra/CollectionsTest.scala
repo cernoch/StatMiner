@@ -52,7 +52,7 @@ class CollectionsTest extends Specification {
       differentiate(List(1,5,3)) must_== List(4,-2)
     }
 
-    "succeed on a list of length 1" in {
+    "succeed on collection list of length 1" in {
       differentiate(List(0)) must_== List()
     }
   }

@@ -13,7 +13,7 @@ object Distances {
 
   /**
    * Use distence metric ''f'' on discrete
-   * distributions ''a'' and ''b''.
+   * distributions ''collection'' and ''b''.
    */
   private def applyDiscrete
     [T,R]
@@ -22,7 +22,7 @@ object Distances {
     (g: (R,R) => R)
     (implicit num: Numeric[R])
   = {
-    ( // This is a performance improvement:
+    ( // This is collection performance improvement:
       if (a.cutPoints.keys == b.cutPoints.keys) {
         a.cutPoints.keys
       } else {

@@ -3,17 +3,15 @@ package cernoch.sm.space
 import cernoch.scalogic._
 
 /**
- *
- *
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
-abstract class ClauseBeam
-    [Result]
+@Deprecated
+abstract class ClauseBeam[Result]
     (mode: Set[Btom[FFT]])
   extends BeamSearch[ Horn[HeadAtom,Set[Atom[FFT]]], Result ] {
 
   /**
-   * Initial state is an empty horn clause without a head
+   * Initial state is an empty horn clause without collection head
    */
   def sourceState = Horn(Set())
 
@@ -70,5 +68,6 @@ abstract class ClauseBeam
   }
 }
 
+@Deprecated
 class HeadAtom(var exVar: Var, var histVar: Var)
   extends Atom[Var]("head", List(exVar, histVar)) {}

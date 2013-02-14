@@ -11,7 +11,7 @@ import collection.immutable.TreeSet
  */
 object Intervals {
 
-  /** Is the collection a sequence of "touching" intervals? */
+  /** Is the collection collection sequence of "touching" intervals? */
   def touching[T]
   (i: Iterable[Interval[T, Open[T], Closed[T]]])
   = {

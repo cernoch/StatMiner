@@ -2,35 +2,39 @@ package cernoch.sm.space
 
 import annotation.tailrec
 import scala.Array
+import java.util.concurrent.Callable
 
 /**
  * A generic best-first-search algorithm
  *
  * @author Radomír Černoch (radomir.cernoch at gmail.com)
  */
-abstract class BestFirstSearch[S,R] {
+abstract class BestFirstSearch[S,R]
+  extends Callable[Iterable[(S,R)]] {
+
+  var probe = new SearchProbe[S,R]
 
   /**
    * Crops and sorts the states after each iteration
    * 
-   * <p>Method can return a reference
-   * to the given object or a new object</p>
+   * <p>Method can return collection reference
+   * to the given object or collection new object</p>
    */
   def cropAndSort
-    ( old: Array[(S,R)],
+    ( old: Iterable[(S,R)],
       neu: Iterable[(S,R)])
-  : Array[(S,R)]
+  : Iterable[(S,R)]
   = old ++ neu
 
   /**
    * Should the algorithm halt?
    */
   def shallWeHalt
-    (s: Array[(S,R)])
+    (s: Iterable[(S,R)])
   : Boolean
 
   /**
-   * Evaluate the score of a state
+   * Evaluate the score of collection state
    *
    * @return [[scala.None]] if state not evaluable
    */
@@ -63,48 +67,79 @@ abstract class BestFirstSearch[S,R] {
   var status: Option[Status] = None
   var result: Option[Status] = None
 
-  def start = {
+  def call() = {
     try {
       status = Some(new Status())
+      probe.searchStarted()
 
-      fireee(Array[(S,R)](), List(sourceState))
+      var draughts = List[(S,R)]()
+      var breedins = List[S]()
+      val source = sourceState
+      try {
+        probe.evaluating(source)
+        val result = stateResult(source)
+        status.get.evaluated += 1
+        probe.evaluated(source, result)
+        probe.bestUpdated(source, result)
+        draughts = (source, result) :: draughts
+
+      } catch {
+        case _:TooOld => { status.get.thrownOut += 1 }
+        case _:TooNew => {
+          status.get.breedings += 1
+          breedins = source :: breedins
+        }
+      }
+
+      fireee(draughts, breedins)
 
     } finally {
       result = status
       status = None
+      probe.searchStopped()
     }
   }
 
-  def bestUpdated
-    (state: S, result: R)
-  : Unit
-  = {}
-  
   @tailrec
   private def fireee
-    ( draughts: Array[(S,R)],
+    ( draughts: Iterable[(S,R)],
       breedins: List[S])
-  : Array[(S,R)]
+  : Iterable[(S,R)]
   = {
-    
-    val children =
-      for (breedin <- breedins;
-           child <- descendants(breedin))
-        yield {
-          status.get.generated += 1
-          child
-        }
+    probe.searchIteration(draughts, breedins)
+
+    val children = for (
+      source <- breedins.view ++ draughts.view.map{_._1};
+      child <- descendants(source)
+    ) yield {
+      status.get.generated += 1
+      probe.stateGenerated(child, source)
+      child
+    }
+    probe.statesGenerated()
     
     var newBreeds = List[S]()
     var withScore = List[(S,R)]()
-    
+    var newDraugts = draughts
+
     for (child <- children) {
 
       try {
+        probe.evaluating(child)
         val score = stateResult(child)
         status.get.evaluated += 1
+        probe.evaluated(child, score)
 
         withScore = (child,score) :: withScore
+
+        // Save memory
+        // TODO: Implement as collection heap
+        if (withScore.size > 5) {
+          probe.draughtsGoingToBeSorted(newDraugts, withScore)
+          newDraugts = cropAndSort(newDraugts, withScore)
+          probe.draughtsHaveBeenSorted(newDraugts)
+          withScore = List[(S,R)]()
+        }
 
       } catch {
         case _:TooOld => { status.get.thrownOut += 1 }
@@ -114,16 +149,16 @@ abstract class BestFirstSearch[S,R] {
         }
       }
     }
-    
-    val newDraugts = cropAndSort(draughts, withScore)
+
+    probe.draughtsGoingToBeSorted(newDraugts, withScore)
+    newDraugts = cropAndSort(newDraugts, withScore)
+    probe.draughtsHaveBeenSorted(newDraugts)
 
     // Update the best so far
     if (!newDraugts.isEmpty) {
-      val (bState,bResult) = newDraugts(0)
-
-      if (draughts.isEmpty ||
-         (bState != draughts(0)._1))
-        bestUpdated(bState, bResult)
+      val (bState,bResult) = newDraugts.head
+      if (draughts.isEmpty || (bState != draughts.head._1))
+        probe.bestUpdated(bState, bResult)
     }
     
     shallWeHalt(newDraugts) match {

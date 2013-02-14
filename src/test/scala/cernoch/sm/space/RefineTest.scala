@@ -14,8 +14,8 @@ class RefineTest extends Specification {
 
   val numD = NumDom("num")
 
-  val catD1 = CatDom("cat1")
-  val catD2 = CatDom("cat1", true, Set("A", "B", "C"))
+  val catD1 = CatDom("cat1", false)
+  val catD2 = CatDom("cat1", false, Set("A", "B", "C"))
 
   val x = Var(numD)
   val y = Var(catD1)

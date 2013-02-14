@@ -37,7 +37,7 @@ trait Instant
 
 object Generator {
 
-  /* Adds a new atom to a clause */
+  /* Adds collection new atom to collection clause */
   def addAtomToHorn
     [H <: Atom[Term]]
     (mode: Set[Btom[FFT]])
@@ -77,14 +77,14 @@ object Generator {
       yield bArg.asInstanceOf[Var]
   }
 
-  /* Instantiates variables in a Horn clause */
+  /* Instantiates variables in collection Horn clause */
   def instantiateHornBody
     [H<:Atom[FFT]]
     (clause: Horn[H,Set[Atom[FFT]]],
-     candidates: Set[Var])
+     candidates: Iterable[Var])
 
-  = candidates
-  .filter{_.dom.isInstanceOf[CatDom]}
+  = candidates.filter{_.dom.isInstanceOf[CatDom]} // numeric domains not doable
+  .filter{!_.dom.isKey} // makes no sense to instantiate values without any meaning
   .flatMap(war => {
     val catDom = war.dom.asInstanceOf[CatDom]
     catDom.allowed.map{ wal => {
